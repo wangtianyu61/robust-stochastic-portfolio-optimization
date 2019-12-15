@@ -1,0 +1,29 @@
+filepath,start_time,train_test_split,end_time,method,number of sample,test_return_mean,test_return_std,Sharper ratio,Loss_Probability,Conditional Loss,VaR,CVaR
+filepath,start_time,train_test_split,end_time,method,number of sample,test_return_mean,test_return_std,Sharper ratio,Loss_Probability,Conditional Loss,VaR,CVaR
+filepath,start_time,train_test_split,end_time,method,number of sample,test_return_mean,test_return_std,Sharper ratio,Loss_Probability,Conditional Loss,VaR,CVaR
+filepath,start_time,train_test_split,end_time,method,number of sample,test_return_mean,test_return_std,Sharper ratio,Loss_Probability,Conditional Loss,VaR,CVaR
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,naive policy 1/N portfolios,251,0.06098008,0.417622844,0.146017107,0.410358566,0.308135922,0.556,0.048135458
+,,,,,,,,,,,,
+filepath,start_time,train_test_split,end_time,method,number of sample,test_return_mean,test_return_std,Sharper ratio,Loss_Probability,Conditional Loss,VaR,CVaR
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,naive policy 1/N portfolios,251,0.06098008,0.417622844,0.146017107,0.410358566,0.308135922,0.556,0.048135458
+,,,,,,,,,,,,
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Markowitz_revised gamma = 0.1,251,0.048161391,0.426856088,0.112828169,0.442231076,0.302840665,0.607271821,0.053373463
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Markowitz_revised gamma = 0.5,251,0.046299746,0.367676048,0.125925379,0.454183267,0.268274913,0.567482948,0.039454331
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Markowitz_revised gamma = 0.9,251,0.047600687,0.371165038,0.128246688,0.442231076,0.278254942,0.599535901,0.039309508
+,,,,,,,,,,,,
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,SAA_CVaR,251,0.057746145,0.392649869,0.147067781,0.438247012,0.298332889,0.619804316,0.039712989
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 2007,251,0.049076812,0.375363199,0.130744869,0.430278884,0.289191116,0.61137225,0.039216264
+,,,,,,,,,,,,
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 2 cluster portfolios (3factor),251,0.068893503,0.386000176,0.178480497,0.422310757,0.276582249,0.538258462,0.041788877
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 3 cluster portfolios (3factor),251,0.078271518,0.403963592,0.193758842,0.402390438,0.269577514,0.497370638,0.046412257
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 4 cluster portfolios (3factor),251,0.078668486,0.401854548,0.195763582,0.406374502,0.265036764,0.478550284,0.046040942
+,,,,,,,,,,,,
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 2 cluster portfolios (5factor),251,0.067857015,0.381882775,0.177690693,0.426294821,0.269961085,0.518490796,0.041476205
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 3 cluster portfolios (5factor),251,0.075428458,0.407010817,0.185322982,0.410358566,0.268084755,0.508675508,0.047164781
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 4 cluster portfolios (5factor),251,0.075347532,0.403573679,0.186700808,0.418326693,0.262542316,0.501710874,0.046235415
+,,,,,,,,,,,,
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 2 cluster portfolios (return),251,0.064444453,0.380384539,0.169419224,0.422310757,0.278225774,0.527392827,0.0408085
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 3 cluster portfolios (return),251,0.062892282,0.396132317,0.158765846,0.418326693,0.282716902,0.566746236,0.045376029
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20180101,Popescu 4 cluster portfolios (return),251,0.063380432,0.416137666,0.152306406,0.426294821,0.29327206,0.564924882,0.047395036
+,,,,,,,,,,,,
+rolling_day = 1,,,,,,,,,,,,

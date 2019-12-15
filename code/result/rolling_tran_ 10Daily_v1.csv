@@ -1,0 +1,2 @@
+filepath,start_time,train_test_split,end_time,method,number of sample,test_return_mean,test_return_std,Sharper ratio,Loss_Probability,Conditional Loss,VaR,CVaR
+../factor model/10_Industry_Portfolios_Daily.csv,20120101,20161231,20170401,naive policy 1/N portfolios,62,0.07672543288651948,0.44187125329091426,0.17363752974445215,0.45161290322580644,0.3021789205703089,0.4346006119401045,0.046645188493888524
