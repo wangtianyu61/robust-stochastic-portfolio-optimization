@@ -1,4 +1,4 @@
-# Document
+# Document for the Codes
 written by Tianyu Wang 
 
 updated on 15th Dec., 2019
@@ -183,11 +183,14 @@ _vXXXX.csv里rolling_day = 1（理想情况下），此时cluster_method表现�
 
 ========
 ## Reference
-Markowitz (1952)
+Markowitz, H. M. (1952). Portfolio Selection. Journal of Finance 7:77–91.
 
-Popescu (2007)
+Popescu, Ioana. 2007. Robust mean-covariance solutions for stochastic optimization. Operations Research 55(1) 98–112
 
-Optimal Versus Naive Diversification: How Inefficient is the 1/N Portfolio Strategy?
+DeMiguel, Victor, Lorenzo Garlappi, Raman Uppal. 2007. Optimal versus naive diversification: How inefficient is the 1/n portfolio strategy? The review of Financial studies 22(5) 1915–1953.
 
-Robust Stochastic Optimization  
+Chen, Zhi, Melvyn Sim, Peng Xiong. 2019. Robust Stochastic Optimization. Working Paper . 
 
+Gao, Rui, and Anton J. Kleywegt. Data-driven robust optimization with known marginal distributions. Working paper, 2017.
+
+Fan J, Fan Y, Lv J (2008) High dimensional covariance matrix estimation using a factor model. Journal of Econometrics 147(1): 186-197
