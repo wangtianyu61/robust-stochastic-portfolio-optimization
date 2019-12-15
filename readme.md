@@ -1,7 +1,7 @@
-# 文档
+# Document
 written by Tianyu Wang 
 
-updated on 26th Nov, 2019
+updated on 15th Dec., 2019
 
 ## 目前实现功能
 1.给定任一规范的Fama-French网站上的portfolio.csv(daily/monthly)，在主函数调整训练集和测试集时间，进行数据读取与划分。
@@ -20,6 +20,7 @@ updated on 26th Nov, 2019
 
 
 =========================
+
 update: 更新了关于target rate /risk_aversion等不同参数的敏感性分析和五因子接口。
 
 update: 加入带有transaction cost的结果。
@@ -176,8 +177,10 @@ _vXXXX.csv里rolling_day = 1（理想情况下），此时cluster_method表现�
 之后在transaction的部分主要考虑选用rolling_day = 30.
 
 ========
+
 10个portfolio
 10-14 15 5个交易日
+
 ========
 ## Reference
 Markowitz (1952)
