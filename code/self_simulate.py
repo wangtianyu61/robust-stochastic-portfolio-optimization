@@ -50,7 +50,7 @@ for i in range(num_of_portfolio):
 writer.writerow(portfolio_name)
 writer_factor.writerow(['Mkt-RF','SMB','HML'])
 
-for j in range(750 + 360):
+for j in range(2100):
     return_data = np.zeros(num_of_portfolio)
     three_factor = np.random.multivariate_normal(three_factor_mean, three_factor_covar)
     writer_factor.writerow(three_factor)

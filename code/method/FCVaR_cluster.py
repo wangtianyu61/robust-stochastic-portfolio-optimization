@@ -6,130 +6,183 @@ Created on Sat Nov  2 19:16:49 2019
 """
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-
-
+import math
+from CVaR_parameter import *
 from gurobipy import *
-from method.show_return import *
+from method.strategy import *
 
-def FCVaR_cluster(cluster_number, cluster_freq, mean_info, cov_info,test_return,epsilon):
-#data preprocessing
-    (num_of_sample, port_num) = test_return.shape
-    print(port_num)
-    covar = list()
-    for i in range(cluster_number):
-        covar.append(cov_info.iloc[port_num*i:port_num*(i+1)])
-
-    #print(covar[0])
-
-    # Create a new model
-    m = Model("Popescu_Bound_clusters")
-
-    # Create variables
-
-
-    weight = pd.Series(m.addVars(port_num))
-    #print(type(weight))
-
-    return_weight = m.addVars(cluster_number, name = 'return_weight')#mu*x+v
-    covar_mean = m.addVars(cluster_number,name = 'covar')#sqrt((mu*x+v)^2+x'sigmax
+class FCVaR_cluster(strategy, strategy_cluster):
+    portfolio_number = 10
+    weight = np.zeros(portfolio_number)
+    method_name = "strategy"
+    #adj_level means the type of robustness optimization
+    def __init__(self, df_select, df_train, rolling_day, portfolio_number, df_factor, cluster_sign, cluster_number, method_name, mean_target = False, adj_level = False, hmm_state_estimate = False):
+        strategy.__init__(self, df_select, df_train, rolling_day, portfolio_number)
+        self.df_factor = df_factor
+        self.method_name = method_name
+        self.cluster_sign = cluster_sign
+        #cluster_sign means choose which method to cluster
+        #if cluster_sign = 1, use factor to build clusters
+        #else if cluster_sign = 0, just use return to build clusters
+        self.cluster_number = cluster_number
+        self.mean_target = mean_target
+        self.adj_level = adj_level
+        self.hmm_state_estimate = hmm_state_estimate
+        if type(self.adj_level) != bool:
+            self.weight_opt = []
+            print('yes')
     
-    ## Set the objective: 
-    obj = 0 
-    for i in range(cluster_number):
-        obj = obj + cluster_freq[i]*((covar_mean[i] - return_weight[i])/(2*epsilon) + return_weight[i] - np.dot(mean_info.iloc[i],weight))
-    m.setObjective(obj, GRB.MINIMIZE)
+    def optimize(self, cluster_number, cluster_freq, mean_info, cov_info,test_return,epsilon,weight_pre,tran_cost_p, shortsale_sign, train_return_mean):
+        # Create a new model
+        #data preprocessing    
+        (num_of_sample, port_num) = test_return.shape
+        covar = list()
+        for i in range(cluster_number):
+            covar.append(cov_info.iloc[port_num*i:port_num*(i+1)])
 
-    # Set the constraints:
-    m.addConstrs((np.dot(covar[i],weight).dot(weight) + return_weight[i]*return_weight[i] <= covar_mean[i]*covar_mean[i]
-                for i in range(cluster_number)), "c0")
-    m.addConstr(weight.sum() == 1,'budget')
-    m.addConstrs((weight[i] >= 0  
-                  for i in range(port_num)),'nonnegative')
-    m.addConstrs((return_weight[i] >= 0
-                  for i in range(cluster_number)),'PD1')
-    m.addConstrs((covar_mean[i] >= 0
-                  for i in range(cluster_number)),'PD2')
+        m = Model("Popescu_Bound_clusters")
+        v = m.addVar(name = 'v', lb = -GRB.INFINITY, ub = GRB.INFINITY)
+        # Create variables
+        if shortsale_sign == 0:
+            weight = pd.Series(m.addVars(port_num))
+        else:
+            weight = pd.Series(m.addVars(port_num, lb = -GRB.INFINITY))
+        
+        #print(type(weight))
+        weight_dif = pd.Series(m.addVars(port_num))
+        
+        covar_mean = m.addVars(cluster_number, lb = 0, name = 'covar')#sqrt((mu*x+v)^2+x'sigmax
 
-    #Solve the Optimization Problem
-    m.setParam('OutputFlag',0)
-    m.optimize()
+        ## Set the objective: 
+        obj = v
+        for i in range(cluster_number):
+            obj = obj + cluster_freq[i]*(covar_mean[i] + tran_cost_p*np.sum(weight_dif)- np.dot(mean_info.iloc[i], weight) - v)/(2*epsilon) 
+        # Set the constraints:
+        m.addConstrs((np.dot(covar[i], weight).dot(weight) + (np.dot(mean_info.iloc[i],weight) + v - tran_cost_p*np.sum(weight_dif))*(np.dot(mean_info.iloc[i],weight) + v - tran_cost_p*np.sum(weight_dif)) <= covar_mean[i]*covar_mean[i]
+                        for i in range(cluster_number)), "c0")
 
-    #Retrieve the weight
-    #print("The optimal weight portfolio from the Popescu Bound with clusters is :")
-    weight = [v.x for v in weight]
-    #print(weight)
+        m.addConstr(weight.sum() == 1,'budget')
 
-    print(num_of_sample)
-    return_PopescuCluster =  np.array(test_return.dot(weight))
-    #print(return_SAACVaR)
+        m.addConstrs((weight[i] - weight_pre[i] <= weight_dif[i]
+                    for i in range(port_num)),'abs1')
+        m.addConstrs((weight_pre[i] - weight[i] <= weight_dif[i]
+                    for i in range(port_num)),'abs2')
+        
+        
+        if self.mean_target != False:
+            max_value = max(np.array(train_return_mean))
+            m.addConstr(np.dot(train_return_mean, weight) >= (1 - self.mean_target*np.sign(max_value))*max_value, "to draw mean-cvar frontier")
     
-    method_name = "Popescu " + str(cluster_number) + " cluster portfolios"
-    print("==================\nMethod:",method_name)
-    print("The number of test sample is ",num_of_sample)
-    print("The mean and standard deviation of the return is ")
+        m.setObjective(obj, GRB.MINIMIZE)
+        #Solve the Optimization Problem
+        m.setParam('OutputFlag',0)
+        m.optimize()            
+        self.base_line = m.objVal#Retrieve the weight
+        #print("The optimal weight portfolio from the Popescu Bound with clusters is :")
+        weight = [v.x for v in weight]
+#        for i in range(cluster_number):
+#            print(cluster_freq[i]*((0 - np.dot(mean_info.iloc[i],weight)-v)/(2*epsilon))) 
+# 
+#        print(covar_mean)
+
+        tran_cost = tran_cost_p*np.sum(abs(weight - weight_pre))
+        self.turnover = self.turnover + np.sum(abs(weight - weight_pre))   
+        
+        [return_PopescuCluster,weight] = self.show_return(test_return, weight)
+        return [weight, return_PopescuCluster*(1 - tran_cost)]
     
-    print(return_PopescuCluster.mean(),return_PopescuCluster.std())
-    print("==================")
+    def optimize_adj(self, cluster_number, cluster_freq, mean_info, cov_info,test_return,epsilon,weight_pre,tran_cost_p, shortsale_sign, train_return_mean):
+        # Create a new model
+        #data preprocessing    
+        (num_of_sample, port_num) = test_return.shape
+        covar = list()
+        for i in range(cluster_number):
+            covar.append(cov_info.iloc[port_num*i:port_num*(i+1)])
+
+        m = Model("Popescu_Bound_clusters")
+        v = m.addVar(name = 'v', lb = -GRB.INFINITY, ub = GRB.INFINITY)
+        # Create variables
+        if shortsale_sign == 0:
+            weight = pd.Series(m.addVars(port_num))
+        else:
+            weight = pd.Series(m.addVars(port_num, lb = -GRB.INFINITY))
+        
+        #print(type(weight))
+        weight_dif = pd.Series(m.addVars(port_num))
+        
+        covar_mean = m.addVars(cluster_number, lb = 0, name = 'covar')#sqrt((mu*x+v)^2+x'sigmax
+        k = m.addVar(name = 'k', lb = 0, ub = 1)
+        
+        ## Set the constraint: 
+        obj = v
+        for i in range(cluster_number):
+            obj = obj + cluster_freq[i]*(covar_mean[i] + tran_cost_p*np.sum(weight_dif)- np.dot(mean_info.iloc[i], weight) - v)/(2*epsilon) 
+        
+        m.addConstr(obj <= (1 + self.adj_level*np.sign(self.base_line))*self.base_line)
+        m.addConstrs((np.dot(covar[i], weight).dot(weight) + (np.dot(mean_info.iloc[i],weight) + v - tran_cost_p*np.sum(weight_dif))*(np.dot(mean_info.iloc[i],weight) + v - tran_cost_p*np.sum(weight_dif)) <= covar_mean[i]*covar_mean[i]
+                        for i in range(cluster_number)), "c0")
+
+        m.addConstr(weight.sum() == 1,'budget')
+
+        m.addConstrs((weight[i] - weight_pre[i] <= weight_dif[i]
+                    for i in range(port_num)),'abs1')
+        m.addConstrs((weight_pre[i] - weight[i] <= weight_dif[i]
+                    for i in range(port_num)),'abs2')
+        
+        
+        if self.mean_target != False:
+            max_value = max(np.array(train_return_mean))
+            m.addConstr(np.dot(train_return_mean, weight) >= (1 - self.mean_target*np.sign(max_value))*max_value, "to draw mean-cvar frontier")
     
-    return [weight,return_PopescuCluster]
-
-def FCVaR_cluster_tran(cluster_number, cluster_freq, mean_info, cov_info,test_return,epsilon,weight_pre,tran_cost_p):
-# Create a new model
-#data preprocessing
-    (num_of_sample, port_num) = test_return.shape
-    print(port_num)
-    covar = list()
-    for i in range(cluster_number):
-        covar.append(cov_info.iloc[port_num*i:port_num*(i+1)])
-
-    #print(covar[0])
-
-    # Create a new model
-    m = Model("Popescu_Bound_clusters")
-
-    # Create variables
+        m.setObjective(k, GRB.MINIMIZE)
+        #Solve the Optimization Problem
+        m.addConstrs((k >= weight[i] for i in range(port_num)), 'budget1')
+        if shortsale_sign != 0:
+            m.addConstrs((k >= -weight[i] for i in range(port_num)), 'budget2')
+        m.setParam('OutputFlag',0)
+        m.optimize()
+        self.weight_opt.append(m.objVal)         
+        #print("The optimal weight portfolio from the Popescu Bound with clusters is :")
+        weight = [v.x for v in weight]
 
 
-    weight = pd.Series(m.addVars(port_num))
-    #print(type(weight))
-    weight_dif = pd.Series(m.addVars(port_num))
+        tran_cost = tran_cost_p*np.sum(abs(weight - weight_pre))
+        self.turnover = self.turnover + np.sum(abs(weight - weight_pre))   
+        
+        [return_PopescuCluster,weight] = self.show_return(test_return, weight)
+        return [weight, return_PopescuCluster*(1 - tran_cost)]
     
-    return_weight = m.addVars(cluster_number, name = 'return_weight')#mu*x+v
-    covar_mean = m.addVars(cluster_number,name = 'covar')#sqrt((mu*x+v)^2+x'sigmax
-    
-    ## Set the objective: 
-    obj = 0 
-    for i in range(cluster_number):
-        obj = obj + cluster_freq[i]*((covar_mean[i] - return_weight[i] + tran_cost_p*np.sum(weight_dif))/(2*epsilon) + return_weight[i] - np.dot(mean_info.iloc[i],weight))
-    m.setObjective(obj, GRB.MINIMIZE)
-
-    # Set the constraints:
-    m.addConstrs((np.dot(covar[i],weight).dot(weight) + (return_weight[i] - tran_cost_p*np.sum(weight_dif))*(return_weight[i] - tran_cost_p*np.sum(weight_dif))<= covar_mean[i]*covar_mean[i]
-                for i in range(cluster_number)), "c0")
-    m.addConstr(weight.sum() == 1,'budget')
-    m.addConstrs((weight[i] >= 0  
-                  for i in range(port_num)),'nonnegative')
-    m.addConstrs((weight[i] - weight_pre[i] <= weight_dif[i]
-                for i in range(port_num)),'abs1')
-    m.addConstrs((weight_pre[i] - weight[i] <= weight_dif[i]
-                for i in range(port_num)),'abs2')
-    m.addConstrs((return_weight[i] >= 0
-                  for i in range(cluster_number)),'PD1')
-    m.addConstrs((covar_mean[i] >= 0
-                  for i in range(cluster_number)),'PD2')
-
-    #Solve the Optimization Problem
-    m.setParam('OutputFlag',0)
-    m.optimize()
-
-    #Retrieve the weight
-    #print("The optimal weight portfolio from the Popescu Bound with clusters is :")
-    weight = [v.x for v in weight]
-    tran_cost = 0
-    for i in range(port_num):
-        tran_cost = tran_cost + tran_cost_p*abs(weight[i] - weight_pre[i])
-    print(tran_cost)
-    [return_PopescuCluster,weight] = show_return(test_return,weight)
-    return [weight, return_PopescuCluster*(1 - tran_cost)]
+    def rolling(self, shortsale_sign):
+        i = 0
+        num_of_sample = len(self.df_select)
+        num_of_train = len(self.df_train)
+        pre_info = 0
+        while i < num_of_sample - num_of_train:
+            
+            train_return = self.df_select[i: i + num_of_train]
+            train_return_mean = np.array(train_return.mean())
+            if i + num_of_train + self.rolling_day < len(self.df_select):       
+                test_return = np.array(self.df_select[i + num_of_train : i + num_of_train + self.rolling_day])
+            else:
+                test_return = np.array(self.df_select[i + num_of_train : len(self.df_select)])
+            
+            if self.cluster_sign == 1:
+                factor_data = self.df_factor[i: i + num_of_train]
+                #normal case or with hmm estimate
+                [cluster_freq, mean_info, cov_info] = self.factor_cluster(train_return, factor_data, self.column_name,self.cluster_number, self.hmm_state_estimate)
+                
+            else:
+                [cluster_freq, mean_info, cov_info] = self.return_cluster(train_return,self.column_name,self.cluster_number, self.hmm_state_compute)
+            
+            cov_info = cov_info.fillna(0)
+            
+            [self.weight, self.return_array[i:i + self.rolling_day]] = self.optimize(self.cluster_number, cluster_freq, mean_info, cov_info, test_return,
+                                                                                        epsilon, self.weight, tran_cost_p, shortsale_sign, train_return_mean)
+            if type(self.adj_level) != bool:
+                [self.weight, self.return_array[i:i + self.rolling_day]] = self.optimize_adj(self.cluster_number, cluster_freq, mean_info, cov_info, test_return,
+                                                                                        epsilon, self.weight, tran_cost_p, shortsale_sign, train_return_mean)
+            
+            self.weight = np.array(self.weight)
+            i = i + self.rolling_day
+            
     

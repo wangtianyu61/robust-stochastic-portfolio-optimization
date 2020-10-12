@@ -5,7 +5,7 @@ Created on Sat Nov  2 12:00:23 2019
 @author: wangtianyu6162
 """
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 def Markowitz(train_return_mean,train_return_covar,test_return):
     sigma_inv = np.linalg.inv(train_return_covar)

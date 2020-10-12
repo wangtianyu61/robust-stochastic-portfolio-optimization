@@ -10,6 +10,8 @@ import numpy as np
 def show_return(test_return,weight):
     (num_of_sample,num) = test_return.shape
     return_list = np.zeros(num_of_sample)
+
+    
     for i in range(num_of_sample):
         return_list[i] = np.dot(test_return[i],weight)#the next time point
         weight = np.multiply(test_return[i]/100 + 1, weight)

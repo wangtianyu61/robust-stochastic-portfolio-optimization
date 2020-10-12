@@ -12,12 +12,13 @@ Created on Sun Nov  3 15:22:41 2019
 
 
 # function for data_processing
-from data_process import *
-from data_process.data_input import data_input
-from data_process.data_stat import *
+#from data_process import *
+#from data_process.data_input import data_input
+#from data_process.data_stat import *
 # functions for statistics and clustering
-from data_process.factor_cluster import *
-from data_process.cluster import return_cluster
+from data_process.input import *
+#from data_process.cluster import *
+#from data_process.choose_random import *
 
 #different optimization problems
 ## parameters
@@ -29,11 +30,12 @@ from CVaR_parameter import *
 
 ### whole portfolio benchmark
 from method.naive_policy import *
+from method.vw_strategy import *
 from method.Markowitz import *
 from method.Markowitz_revised import *
 from method.SAA_CVaR import *
-
-
+from method.MVP import *
+from method.strategy import *
 #Markowitz, Markowitz_revised, SAA_CVaR, FCVaR_no_cluster
 ### include naive policy, Markowitz, Markowitz_revised, SAA_CVaR, Popescu_no_cluster
 
@@ -41,6 +43,11 @@ from method.SAA_CVaR import *
 from method.FCVaR_no_cluster import *
 from method.FCVaR_cluster import *
 from method.FCVaR_cluster_bs import *
+from method.FCVaR_side_cluster import *
+from method.FCVaR_approximate import *
+from method.FCVaR_framework import *
+from method.FCVaR_wasserstain import *
+from method.support import *
 ## Popescu_cluster
 ## Popescu_cluster_bs
 
